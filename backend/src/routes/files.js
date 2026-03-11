@@ -118,7 +118,7 @@ router.delete('/:id', auth, async (req, res) => {
     'DELETE FROM files WHERE id = $1 AND owner_id = $2 RETURNING filename, size',
     [req.params.id, req.user.id]
   );
-  if (!rows[0]) return res.status(404).json({ error: 'Not found' });
+  if (!rows[0]) return res.status(404).json({ error: 'File not found (it may already be deleted)' });
   try { fs.unlinkSync(path.join(UPLOAD_DIR, rows[0].filename)); } catch {}
   await pool.query('UPDATE users SET storage_used = storage_used - $1 WHERE id = $2', [rows[0].size, req.user.id]);
   res.json({ ok: true });

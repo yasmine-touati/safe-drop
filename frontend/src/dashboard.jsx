@@ -46,8 +46,10 @@ export default function Dashboard() {
   async function fetchFiles() {
     try {
       const { data } = await api.get('/files');
-      setFiles(data);
-      setStorageUsed(data.reduce((acc, f) => acc + f.size, 0));
+      // Postgres BIGINT values may arrive as strings; normalize once for UI math.
+      const normalized = data.map((f) => ({ ...f, size: Number(f.size) || 0 }));
+      setFiles(normalized);
+      setStorageUsed(normalized.reduce((acc, f) => acc + f.size, 0));
     } catch {
       showToast('Failed to load files', 'error');
     } finally {

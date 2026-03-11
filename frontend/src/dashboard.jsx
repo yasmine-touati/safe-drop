@@ -68,28 +68,38 @@ export default function Dashboard() {
       const secure = window.isSecureContext && crypto.subtle;
       const formData = new FormData();
       const ivs = [];
+      const encryptedKeys = [];
 
       for (let i = 0; i < picked.length; i++) {
         if (secure) {
           const { blob, iv, keyBase64 } = await encryptFile(picked[i]);
           formData.append('files', blob, picked[i].name);
           ivs.push(iv);
-          const keyStore = JSON.parse(localStorage.getItem('fileKeys') || '{}');
-          keyStore[`${picked[i].name}_${Date.now()}_${i}`] = { key: keyBase64, iv };
-          localStorage.setItem('fileKeys', JSON.stringify(keyStore));
+          encryptedKeys.push({ key: keyBase64, iv });
         } else {
           formData.append('files', picked[i]);
           ivs.push(null);
+          encryptedKeys.push(null);
         }
         setProgress(5 + Math.round(((i + 1) / picked.length) * 35));
       }
 
       if (ivs.some(Boolean)) formData.append('encryption_ivs', JSON.stringify(ivs));
 
-      await api.post('/files/upload', formData, {
+      const { data } = await api.post('/files/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: e => setProgress(40 + Math.round((e.loaded / e.total) * 55)),
       });
+
+      // Persist decryption keys mapped by file id so download/share can find them reliably.
+      if (Array.isArray(data?.uploaded) && encryptedKeys.some(Boolean)) {
+        const keyStore = JSON.parse(localStorage.getItem('fileKeys') || '{}');
+        for (let i = 0; i < data.uploaded.length; i++) {
+          const rec = encryptedKeys[i];
+          if (rec && data.uploaded[i]?.id) keyStore[data.uploaded[i].id] = rec;
+        }
+        localStorage.setItem('fileKeys', JSON.stringify(keyStore));
+      }
 
       setProgress(100);
       showToast(`${picked.length} file${picked.length > 1 ? 's' : ''} uploaded${secure ? ' & encrypted' : ''}`);
@@ -112,12 +122,13 @@ export default function Dashboard() {
       if (f.encryption_iv) {
         // Find the decryption key in localStorage
         const keyStore = JSON.parse(localStorage.getItem('fileKeys') || '{}');
-        const entry = Object.entries(keyStore).find(([k]) => k.startsWith(f.original_name + '_'));
-        if (!entry) {
+        const legacyEntry = Object.entries(keyStore).find(([k]) => k.startsWith(`${f.original_name}_`));
+        const record = keyStore[f.id] || legacyEntry?.[1];
+        if (!record) {
           showToast('Decryption key not found in this browser — file may have been uploaded elsewhere', 'error');
           return;
         }
-        const { key, iv } = entry[1];
+        const { key, iv } = record;
         const decrypted = await decryptFile(data, key, iv || f.encryption_iv);
         blob = new Blob([decrypted]);
       } else {
@@ -153,7 +164,21 @@ export default function Dashboard() {
     try {
       const payload = shareExpiry ? { expires_in_hours: Number(shareExpiry) } : {};
       const { data } = await api.post(`/files/${id}/share`, payload);
-      await navigator.clipboard.writeText(data.share_url);
+      const file = files.find(f => f.id === id);
+      let shareUrl = data.share_url;
+
+      if (file?.encryption_iv) {
+        const keyStore = JSON.parse(localStorage.getItem('fileKeys') || '{}');
+        const legacyEntry = Object.entries(keyStore).find(([k]) => k.startsWith(`${file.original_name}_`));
+        const rec = keyStore[id] || legacyEntry?.[1];
+        if (rec?.key) {
+          shareUrl = `${shareUrl}#key=${encodeURIComponent(rec.key)}`;
+        } else {
+          showToast('Link copied without key. Recipient will not be able to decrypt.', 'error');
+        }
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
       showToast(`Share link copied${data.expires_at ? ` · expires ${formatDate(data.expires_at)}` : ''}`);
       setShareModal(null);
       setShareExpiry('');

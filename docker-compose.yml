@@ -31,11 +31,12 @@ services:
       - "5173:80"
 
   nginx:
-    image: nginx:alpine
+    build: ./nginx
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - certs:/etc/nginx/certs
     ports:
-    - "80:80"
+      - "80:80"
+      - "443:443"
     depends_on:
       - backend
       - frontend
@@ -43,3 +44,4 @@ services:
 volumes:
   pgdata:
   uploads:
+  certs:

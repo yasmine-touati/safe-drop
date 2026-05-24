@@ -3,14 +3,14 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #080b0f;
-  --surface:   #0d1117;
-  --border:    #1e2a38;
-  --green:     #00ff88;
-  --green-dim: #00cc6a;
-  --green-glow:rgba(0,255,136,0.12);
-  --text:      #c9d1d9;
-  --text-muted:#4a5568;
+  --bg:        #eceff1; /* page background (light grid paper) */
+  --surface:   #ffffff; /* card / surface color */
+  --border:    #e6e9ee; /* soft border */
+  --green:     #DE7356; /* primary accent */
+  --green-dim: #c9654b; /* accent hover */
+  --green-glow:rgba(222,115,86,0.12);
+  --text:      #0b1220; /* dark display text */
+  --text-muted:#6b7280; /* muted gray */
   --red:       #ff4e5b;
   --mono:      'JetBrains Mono', monospace;
   --display:   'Syne', sans-serif;
@@ -30,12 +30,13 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
+  /* very subtle horizontal scanlines for texture */
   background: repeating-linear-gradient(
     0deg,
     transparent,
     transparent 2px,
-    rgba(0,255,136,0.012) 2px,
-    rgba(0,255,136,0.012) 4px
+    rgba(0,0,0,0.02) 2px,
+    rgba(0,0,0,0.02) 4px
   );
   pointer-events: none;
   z-index: 9999;
@@ -46,9 +47,10 @@ body::after {
   content: '';
   position: fixed;
   inset: 0;
+  /* soft grid background */
   background-image:
-    linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
   background-size: 40px 40px;
   pointer-events: none;
   z-index: 0;
@@ -138,7 +140,7 @@ body::after {
 .btn-primary {
   width: 100%;
   background: var(--green);
-  color: var(--bg);
+  color: var(--surface);
   font-family: var(--mono);
   font-size: 0.85rem;
   font-weight: 700;
@@ -358,7 +360,7 @@ body::after {
   vertical-align: middle;
 }
 
-.file-table tr:hover td { background: rgba(0,255,136,0.02); }
+.file-table tr:hover td { background: rgba(222,115,86,0.02); }
 
 .file-name {
   color: var(--text);
@@ -404,7 +406,7 @@ body::after {
   gap: 0.3rem;
   font-size: 0.65rem;
   color: var(--green);
-  border: 1px solid rgba(0,255,136,0.3);
+  border: 1px solid rgba(222,115,86,0.12);
   padding: 0.1rem 0.4rem;
   letter-spacing: 0.05em;
 }

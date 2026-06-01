@@ -1,7 +1,7 @@
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci --production && npm audit fix
+RUN npm ci --omit=dev
 COPY src ./src
 
 FROM base AS production

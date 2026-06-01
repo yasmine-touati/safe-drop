@@ -14,7 +14,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build images
+        run: docker compose build --pull
+
+      - name: List built images
+        run: docker images --format '{{.Repository}}:{{.Tag}}'
+
+      - name: Scan images with Trivy (fail on HIGH/CRITICAL)
+        run: |
+          set -euo pipefail
+          images="$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -E 'backend|frontend|nginx' || true)"
+          if [ -z "$images" ]; then
+            echo "No images found to scan"
+            exit 0
+          fi
+          for img in $images; do
+            echo "Scanning $img"
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image \
+              --no-progress --exit-code 1 --severity CRITICAL,HIGH "$img"
+          done
   deploy:
+    needs: scan
     runs-on: ubuntu-latest
     steps:
       - name: Deploy latest main to EC2 over SSH

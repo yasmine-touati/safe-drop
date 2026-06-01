@@ -5,7 +5,7 @@ CREATE TABLE users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   storage_used BIGINT DEFAULT 0,
-  storage_limit BIGINT DEFAULT 5368709120, -- 5GB
+  storage_limit BIGINT DEFAULT 5368709120, 
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -25,3 +25,4 @@ CREATE TABLE files (
 
 CREATE INDEX idx_files_owner ON files(owner_id);
 CREATE INDEX idx_files_share_token ON files(share_token);
+

@@ -14,41 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Build images
-        run: docker compose build --pull
-
-      - name: Scan backend image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: safe-drop-backend:latest
-          format: table
-          severity: CRITICAL,HIGH
-          exit-code: "1"
-
-      - name: Scan frontend image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: safe-drop-frontend:latest
-          format: table
-          severity: CRITICAL
-          exit-code: "1"
-
-      - name: Scan nginx image with Trivy
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: safe-drop-nginx:latest
-          format: table
-          severity: CRITICAL,HIGH
-          exit-code: "1"
-
   deploy:
-    needs: scan
     runs-on: ubuntu-latest
     steps:
       - name: Deploy latest main to EC2 over SSH

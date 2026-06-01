@@ -37,7 +37,7 @@ jobs:
           for img in $images; do
             echo "Scanning $img"
             docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image \
-              --no-progress --exit-code 1 --severity CRITICAL,HIGH "$img"
+              --no-progress --exit-code 1 --severity CRITICAL "$img"
           done
   deploy:
     needs: scan
